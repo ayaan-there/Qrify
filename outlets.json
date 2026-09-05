@@ -1,0 +1,24 @@
+{
+  "outlets": {
+    "burger-king-dehradun": {
+      "name": "Burger King (Dehradun)",
+      "googleMapsReviewUrl": "https://search.google.com/local/writereview?placeid=ChIJTVFbC5UZrjsRahqyXSRs4p4&source=g.page.m.ia._&laa=nmx-review-solicitation-ia2",
+      "qrCodePath": "qr/burger-king-dehradun.png"
+    },
+    "demo-cafe": {
+      "name": "Demo Café",
+      "googleMapsReviewUrl": "https://www.google.com/maps/review/...PASTE_YOUR_GOOGLE_MAPS_REVIEW_URL_HERE...",
+      "qrCodePath": "qr/demo-cafe.png"
+    },
+    "joes-pizza": {
+      "name": "Joe's Pizza",
+      "googleMapsReviewUrl": "https://www.google.com/maps/review/...PASTE_JOES_PIZZA_URL_HERE...",
+      "qrCodePath": "qr/joes-pizza.png"
+    },
+    "sunset-bar": {
+      "name": "Sunset Bar",
+      "googleMapsReviewUrl": "https://www.google.com/maps/review/...PASTE_SUNSET_BAR_URL_HERE...",
+      "qrCodePath": "qr/sunset-bar.png"
+    }
+  }
+}

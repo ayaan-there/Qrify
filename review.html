@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a73e8">
+  <title>Post Your Review</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { margin: 0; background: #f8f9fa; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .header { background: white; padding: 14px 16px; text-align: center; border-bottom: 1px solid #e8eaed; position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
+    .header h1 { margin: 0; font-size: 17px; font-weight: 600; color: #1d1d1f; }
+    .outlet-badge { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; margin-top: 6px; }
+    .stars { display: flex; justify-content: center; gap: 6px; margin: 10px 0 4px; }
+    .star { font-size: 26px; color: #e0e0e0; cursor: pointer; user-select: none; }
+    .star.filled { color: #fabb05; }
+    iframe { flex: 1; border: none; width: 100%; background: white; }
+    .footer { padding: 12px 16px; font-size: 12px; color: #8e8e93; text-align: center; background: white; border-top: 1px solid #e8eaed; flex-shrink: 0; }
+    .footer strong { color: #1d1d1f; }
+    .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #8e8e93; gap: 12px; }
+    .spinner { width: 28px; height: 28px; border: 3px solid #e8eaed; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px; text-align: center; color: #8e8e93; gap: 16px; }
+    .error-state button { padding: 12px 24px; background: #1a73e8; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .copy-box { width: 100%; max-width: 360px; padding: 12px; font: inherit; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; min-height: 100px; resize: vertical; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Post Your Review</h1>
+    <div class="outlet-badge" id="outletBadge">Loading…</div>
+  </header>
+
+  <div class="stars" id="stars" role="radiogroup" aria-label="Your selected rating" aria-hidden="true">
+    <span class="star filled" data-value="1">★</span>
+    <span class="star filled" data-value="2">★</span>
+    <span class="star filled" data-value="3">★</span>
+    <span class="star filled" data-value="4">★</span>
+    <span class="star filled" data-value="5">★</span>
+  </div>
+
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    <span>Loading Google Maps…</span>
+  </div>
+
+  <iframe id="mapsFrame" src="about:blank" style="display:none;"></iframe>
+
+  <div class="error-state" id="errorState" style="display:none;">
+    <p>Couldn't auto-fill (browser security blocks cross-origin scripts).</p>
+    <p>Your review is ready below — just copy & paste:</p>
+    <textarea class="copy-box" id="copyBox" readonly></textarea>
+    <button onclick="copyReview()">Copy to Clipboard</button>
+  </div>
+
+  <footer class="footer">
+    Review <strong id="footerOutlet"></strong> on Google Maps · Tap <strong>Post</strong> when ready
+  </footer>
+
+  <script>
+    // ===== READ STORED DATA =====
+    const stored = sessionStorage.getItem('reviewAutofill');
+    if (!stored) {
+      window.location.href = 'index.html';
+    }
+    const { text, rating, outletId, outletName, googleMapsUrl } = JSON.parse(stored);
+
+    // ===== UI SETUP =====
+    document.getElementById('outletBadge').textContent = outletName;
+    document.getElementById('footerOutlet').textContent = outletName;
+    document.title = `Review ${outletName} · Google Maps`;
+
+    const stars = document.querySelectorAll('#stars .star');
+    stars.forEach((s, i) => s.classList.toggle('filled', i < rating));
+
+    // ===== LOAD GOOGLE MAPS IN IFRAME =====
+    const frame = document.getElementById('mapsFrame');
+    const loading = document.getElementById('loadingState');
+    const errorState = document.getElementById('errorState');
+    const copyBox = document.getElementById('copyBox');
+
+    copyBox.value = text;
+
+    frame.src = googleMapsUrl;
+
+    frame.addEventListener('load', () => {
+      loading.style.display = 'none';
+      frame.style.display = 'block';
+      
+      // Try to inject auto-fill script
+      setTimeout(() => injectAutofill(), 500);
+    });
+
+    function injectAutofill() {
+      try {
+        const script = `
+          (function() {
+            function waitFor(selector, timeout = 15000) {
+              return new Promise((resolve, reject) => {
+                const start = Date.now();
+                const check = () => {
+                  const el = document.querySelector(selector);
+                  if (el) return resolve(el);
+                  if (Date.now() - start > timeout) return reject(new Error('Timeout: ' + selector));
+                  requestAnimationFrame(check);
+                };
+                check();
+              });
+            }
+
+            async function autofill() {
+              try {
+                // 1. Find and fill textarea
+                const textarea = await waitFor('#c4');
+                textarea.focus();
+                
+                const reviewText = ${JSON.stringify(text)};
+                textarea.value = ''; // Clear any placeholder
+                
+                for (const ch of reviewText) {
+                  textarea.value += ch;
+                  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                  await new Promise(r => setTimeout(r, 35 + Math.random() * 130));
+                }
+                textarea.dispatchEvent(new Event('change', { bubbles: true }));
+                textarea.blur();
+
+                // 2. Click the rating stars (find unchecked one matching rating)
+                await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
+                const starSelector = '.s2xyy[data-rating="' + ${rating} + '"][aria-checked="false"]';
+                const star = document.querySelector(starSelector);
+                if (star) {
+                  star.click();
+                  star.focus();
+                }
+
+                console.log('[AutoFill] Success — form ready for user to post');
+              } catch (e) {
+                console.warn('[AutoFill] Failed:', e.message);
+                throw e; // Trigger fallback
+              }
+            }
+
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', autofill);
+            } else {
+              autofill();
+            }
+          })();
+        `;
+        frame.contentWindow.eval(script);
+      } catch (e) {
+        // Cross-origin block — show fallback
+        showFallback();
+      }
+    }
+
+    function showFallback() {
+      loading.style.display = 'none';
+      frame.style.display = 'none';
+      errorState.style.display = 'flex';
+    }
+
+    function copyReview() {
+      copyBox.select();
+      document.execCommand('copy');
+      const btn = errorState.querySelector('button');
+      btn.textContent = 'Copied!';
+      btn.style.background = '#34a853';
+      setTimeout(() => {
+        btn.textContent = 'Copy to Clipboard';
+        btn.style.background = '#1a73e8';
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
