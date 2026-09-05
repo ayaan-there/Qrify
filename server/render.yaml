@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: qrify-review-server
+    env: docker
+    dockerfilePath: ./server/Dockerfile
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+    # Persistent disk for Chrome profile (cookies)
+    disk:
+      name: chrome-profile
+      mountPath: /app/chrome-profile
+      sizeGB: 1
+    # Auto-deploy on push to main
+    autoDeploy: true
