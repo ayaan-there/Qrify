@@ -119,7 +119,7 @@ class ReviewAutomationClient {
 if (typeof window !== 'undefined' && window.location.pathname.includes('review.html')) {
   // Read server URL from meta tag or config
   const serverUrl = document.querySelector('meta[name="server-url"]')?.content 
-    || 'https://qrify-server.onrender.com'; // Your Render URL
+    || 'https://qrify-i4yd.onrender.com'; // Your Render URL
   
   const client = new ReviewAutomationClient(serverUrl);
   

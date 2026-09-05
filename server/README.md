@@ -63,7 +63,7 @@ tar -czf chrome-profile.tar.gz chrome-profile
 ### 5. Update Frontend Config
 In `review.html`, update the server URL:
 ```html
-<meta name="server-url" content="https://qrify-server.onrender.com">
+<meta name="server-url" content="https://qrify-i4yd.onrender.com">
 ```
 
 Commit & push → Vercel auto-redeploys.
