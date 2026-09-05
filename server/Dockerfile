@@ -11,8 +11,8 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 # Copy source code
-COPY src/ ./src/
-COPY outlets.json ./
+    COPY src/ ./src/
+    COPY outlets.json ./
 
 # Create logs directory
 RUN mkdir -p logs
