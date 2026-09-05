@@ -14,7 +14,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const OUTLETS_FILE = path.join(__dirname, 'outlets.json');
-const BASE_URL = process.env.BASE_URL || 'https://your-domain.com'; // CHANGE THIS
+const BASE_URL = process.env.BASE_URL || 'https://qrify-two.vercel.app/'; 
 
 function loadOutlets() {
   return JSON.parse(fs.readFileSync(OUTLETS_FILE, 'utf8'));
