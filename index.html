@@ -4,129 +4,132 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1a73e8">
+  <meta name="server-url" content="https://qrify-server.onrender.com">
   <title>Share Your Experience</title>
   <style>
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-    body { margin: 0; padding: 0; background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
-    .card { background: white; border-radius: 20px; padding: 40px 28px; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04); text-align: center; border: 1px solid #f0f0f0; }
+    body { margin: 0; background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; }
+    .card { background: white; border-radius: 20px; padding: 32px 24px; width: 100%; max-width: 380px; box-shadow: 0 4px 24px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; }
     .logo { width: 56px; height: 56px; margin: 0 auto 20px; border-radius: 16px; background: linear-gradient(135deg, #1a73e8 0%, #4285f4 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: 700; }
-    h1 { font-size: 26px; font-weight: 700; margin: 0 0 8px; color: #1d1d1f; letter-spacing: -0.3px; }
-    .subtitle { color: #6e6e73; font-size: 16px; line-height: 1.5; margin: 0 0 32px; font-weight: 400; }
-    .outlet-name { background: #f6f7f9; border-radius: 12px; padding: 12px 16px; margin-bottom: 24px; font-weight: 600; color: #1d1d1f; font-size: 15px; }
-    .stars { display: flex; justify-content: center; gap: 10px; margin: 24px 0 32px; }
-    .star { font-size: 40px; color: #e0e0e0; cursor: pointer; user-select: none; transition: transform 0.15s ease, color 0.15s ease; line-height: 1; }
+    h1 { font-size: 24px; font-weight: 700; margin: 0 0 8px; color: #1d1d1f; letter-spacing: -0.3px; }
+    .subtitle { color: #6e6e73; font-size: 15px; line-height: 1.5; margin: 0 0 24px; font-weight: 400; }
+    .outlet-name { background: #f6f7f9; border-radius: 12px; padding: 12px 16px; margin-bottom: 24px; font-weight: 600; color: #1d1d1f; font-size: 15px; text-align: center; }
+    
+    /* Star Rating */
+    .rating-section { margin-bottom: 28px; }
+    .rating-label { display: block; font-size: 14px; font-weight: 600; color: #1d1d1f; margin-bottom: 12px; text-align: center; }
+    .stars { display: flex; justify-content: center; gap: 10px; }
+    .star { font-size: 44px; color: #e0e0e0; cursor: pointer; user-select: none; transition: transform 0.15s ease, color 0.15s ease; line-height: 1; }
     .star.filled { color: #fabb05; }
+    .star:hover { transform: scale(1.15); }
     .star:active { transform: scale(0.9); }
-    .btn { width: 100%; padding: 18px 24px; font-size: 17px; font-weight: 600; color: white; background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%); border: none; border-radius: 14px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 14px rgba(26,115,232,0.3); transition: transform 0.1s ease, box-shadow 0.1s ease; }
+    .star-input { position: absolute; opacity: 0; pointer-events: none; }
+    
+    /* Review Textarea */
+    .review-section { margin-bottom: 28px; }
+    .review-label { display: block; font-size: 14px; font-weight: 600; color: #1d1d1f; margin-bottom: 10px; text-align: center; }
+    .review-textarea { width: 100%; min-height: 120px; padding: 16px; border: 2px solid #e8eaed; border-radius: 12px; font: inherit; font-size: 15px; line-height: 1.5; resize: vertical; outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; background: #fafafa; }
+    .review-textarea:focus { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,0.15); background: white; }
+    .review-textarea::placeholder { color: #a0a0a4; }
+    .char-count { text-align: right; font-size: 12px; color: #8e8e93; margin-top: 8px; }
+    
+    /* Submit Button */
+    .btn { width: 100%; padding: 18px 24px; font-size: 17px; font-weight: 600; color: white; background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%); border: none; border-radius: 14px; cursor: pointer; touch-action: manipulation; box-shadow: 0 4px 14px rgba(26,115,232,0.3); transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.2s ease; }
     .btn:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(26,115,232,0.3); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
-    .note { font-size: 13px; color: #8e8e93; margin-top: 20px; line-height: 1.5; }
+    .btn.loading { background: linear-gradient(135deg, #5c9cff 0%, #1a73e8 100%); }
+    
+    /* Loading State */
+    .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
+    .loading-overlay.show { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 4px solid #e8eaed; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 16px; color: #1d1d1f; font-weight: 500; }
+    .loading-subtext { font-size: 13px; color: #8e8e93; text-align: center; max-width: 280px; }
+    
+    /* Success State */
+    .success-state { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px; text-align: center; color: #34a853; gap: 20px; animation: fadeIn 0.4s ease; }
+    .success-state.show { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .success-icon { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 40px; box-shadow: 0 8px 24px rgba(52,168,83,0.3); }
+    .success-title { font-size: 22px; font-weight: 700; color: #1d1d1f; margin: 0; }
+    .success-review { font-size: 14px; color: #5f6368; margin: 0; max-width: 300px; line-height: 1.5; }
+    .success-rating { display: flex; gap: 4px; margin: 8px 0; justify-content: center; }
+    .success-star { font-size: 24px; color: #fabb05; }
+    .btn-close { padding: 14px 32px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 16px; cursor: pointer; }
+    
+    /* Error State */
+    .error-state { display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 24px; text-align: center; color: #d93025; gap: 16px; }
+    .error-state.show { display: flex; }
+    .error-icon { width: 64px; height: 64px; border-radius: 50%; background: #fce8e6; display: flex; align-items: center; justify-content: center; color: #d93025; font-size: 28px; }
+    .error-title { font-size: 18px; font-weight: 600; color: #1d1d1f; margin: 0; }
+    .error-message { font-size: 14px; color: #5f6368; margin: 0; max-width: 300px; }
+    .btn-retry { padding: 14px 32px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 16px; cursor: pointer; }
+    
+    .note { font-size: 12px; color: #8e8e93; margin-top: 20px; line-height: 1.5; text-align: center; }
     .note strong { color: #1d1d1f; }
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0%, 100% { box-shadow: 0 4px 14px rgba(26,115,232,0.3); } 50% { box-shadow: 0 6px 20px rgba(26,115,232,0.5); } }
   </style>
 </head>
 <body>
-  <div class="card" role="main">
+  <div class="card" id="mainCard" role="main">
     <div class="logo" aria-hidden="true">★</div>
     <h1>Share Your Experience</h1>
-    <p class="subtitle">Your feedback helps us grow and lets others know what to expect.</p>
+    <p class="subtitle">Your feedback helps others discover great places.</p>
     <div class="outlet-name" id="outletName">Loading…</div>
     
-    <div class="stars" id="stars" role="radiogroup" aria-label="Select your rating">
-      <span class="star filled" data-value="1" role="radio" aria-checked="true" tabindex="0">★</span>
-      <span class="star filled" data-value="2" role="radio" aria-checked="true" tabindex="0">★</span>
-      <span class="star filled" data-value="3" role="radio" aria-checked="true" tabindex="0">★</span>
-      <span class="star filled" data-value="4" role="radio" aria-checked="true" tabindex="0">★</span>
-      <span class="star filled" data-value="5" role="radio" aria-checked="true" tabindex="0">★</span>
+    <div class="rating-section">
+      <label class="rating-label">Your Rating</label>
+      <div class="stars" id="stars" role="radiogroup" aria-label="Select your rating">
+        <input type="radio" class="star-input" name="rating" value="1" id="star1" aria-label="1 star">
+        <label for="star1" class="star" data-value="1" role="radio" aria-checked="false" tabindex="0">★</label>
+        <input type="radio" class="star-input" name="rating" value="2" id="star2" aria-label="2 stars">
+        <label for="star2" class="star" data-value="2" role="radio" aria-checked="false" tabindex="0">★</label>
+        <input type="radio" class="star-input" name="rating" value="3" id="star3" aria-label="3 stars">
+        <label for="star3" class="star" data-value="3" role="radio" aria-checked="false" tabindex="0">★</label>
+        <input type="radio" class="star-input" name="rating" value="4" id="star4" aria-label="4 stars">
+        <label for="star4" class="star" data-value="4" role="radio" aria-checked="false" tabindex="0">★</label>
+        <input type="radio" class="star-input" name="rating" value="5" id="star5" aria-label="5 stars" checked>
+        <label for="star5" class="star filled" data-value="5" role="radio" aria-checked="true" tabindex="0">★</label>
+      </div>
     </div>
     
-    <button class="btn pulse" id="goBtn" disabled>Continue to Google Maps</button>
-    <p class="note">You'll review <strong id="outletNameBtn"></strong> on Google Maps. Edit the suggested review if you'd like, then tap <strong>Post</strong>.</p>
+    <div class="review-section">
+      <label class="review-label">Your Review <span id="charCountLabel" style="font-weight:400;color:#8e8e93;font-size:12px;"></span></label>
+      <textarea class="review-textarea" id="reviewText" placeholder="Share details of your experience…" aria-label="Review text"></textarea>
+      <div class="char-count"><span id="charCount">0</span>/2000</div>
+    </div>
+    
+    <button class="btn" id="submitBtn" disabled>Post Review</button>
+    <p class="note">We'll post this to <strong id="outletNameBtn"></strong> on Google Maps using your account.</p>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Posting your review…</div>
+    <div class="loading-subtext" id="loadingSubtext">This may take a moment</div>
+  </div>
+  
+  <!-- Success State -->
+  <div class="success-state" id="successState">
+    <div class="success-icon">✅</div>
+    <h2 class="success-title">Review Posted!</h2>
+    <div class="success-rating" id="successStars"></div>
+    <p class="success-review" id="successReviewText"></p>
+    <button class="btn-close" onclick="window.close()">Close</button>
+  </div>
+  
+  <!-- Error State -->
+  <div class="error-state" id="errorState">
+    <div class="error-icon">⚠️</div>
+    <h3 class="error-title">Couldn't Post Review</h3>
+    <p class="error-message" id="errorMessage">Something went wrong. Please try again.</p>
+    <button class="btn-retry" onclick="retry()">Try Again</button>
   </div>
 
   <script>
-    // ===== GET OUTLET ID FROM URL =====
-    const params = new URLSearchParams(window.location.search);
-    const outletId = params.get('outlet') || params.get('id') || params.get('place');
-    
-    if (!outletId) {
-      document.getElementById('outletName').textContent = 'Invalid link — missing outlet ID';
-      document.getElementById('goBtn').style.display = 'none';
-      throw new Error('No outlet ID in URL');
-    }
-
-    // ===== LOAD OUTLET CONFIG =====
-    async function loadOutletConfig() {
-      try {
-        const res = await fetch('outlets.json', { cache: 'no-cache' });
-        if (!res.ok) throw new Error('Config not found');
-        const config = await res.json();
-        return config.outlets[outletId];
-      } catch (e) {
-        console.error('Failed to load outlets.json:', e);
-        return null;
-      }
-    }
-
-    // ===== INIT =====
-    let selectedRating = 5;
-    let outletData = null;
-
-    const stars = document.querySelectorAll('#stars .star');
-    const goBtn = document.getElementById('goBtn');
-    const outletNameEl = document.getElementById('outletName');
-    const outletNameBtn = document.getElementById('outletNameBtn');
-
-    stars.forEach(star => {
-      star.addEventListener('click', () => {
-        selectedRating = parseInt(star.dataset.value, 10);
-        stars.forEach((s, i) => {
-          const filled = i < selectedRating;
-          s.classList.toggle('filled', filled);
-          s.setAttribute('aria-checked', filled);
-        });
-        goBtn.disabled = false;
-      });
-      star.addEventListener('keydown', e => {
-        if (e.key === 'ArrowRight' && star.dataset.value < '5') star.nextElementSibling?.focus();
-        if (e.key === 'ArrowLeft' && star.dataset.value > '1') star.previousElementSibling?.focus();
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); star.click(); }
-      });
-    });
-
-    loadOutletConfig().then(data => {
-      outletData = data;
-      if (data) {
-        outletNameEl.textContent = data.name;
-        outletNameBtn.textContent = data.name;
-        goBtn.disabled = false;
-      } else {
-        outletNameEl.textContent = 'Outlet not found';
-        goBtn.textContent = 'Configuration Error';
-        goBtn.disabled = true;
-      }
-    });
-
-    // ===== ON CLICK: STORE DATA + REDIRECT TO REVIEW PAGE =====
-    goBtn.addEventListener('click', () => {
-      if (!outletData) return;
-      
-      const reviewText = getRandomReview();
-      
-      sessionStorage.setItem('reviewAutofill', JSON.stringify({
-        text: reviewText,
-        rating: selectedRating,
-        outletId: outletId,
-        outletName: outletData.name,
-        googleMapsUrl: outletData.googleMapsReviewUrl,
-        timestamp: Date.now()
-      }));
-      
-      window.location.href = 'review.html';
-    });
-
-    // ===== REVIEW TEMPLATES (100 lines) =====
+    // ===== CONFIG =====
+    const SERVER_URL = document.querySelector('meta[name="server-url"]')?.content || 'https://qrify-server.onrender.com';
     const REVIEW_TEMPLATES = [
       "Absolutely loved this place! Will definitely be back.",
       "Great experience from start to finish. Highly recommend.",
@@ -201,36 +204,309 @@
       "The standard. That's what this is. Everything else gets measured against it.",
       "Sometimes you just need a place that delivers. No drama, no fuss, just pure quality. This is it.",
       "Honestly, the best money I've spent in a long time. Value, quality, experience — all there.",
-      "⭐⭐⭐⭐⭐ Absolutely incredible! From the moment we walked in, we felt welcomed and valued. The attention to detail is remarkable!",
-      "Wow, just wow! 🌟 This place exceeded every expectation. The team's passion shines through in everything they do!",
-      "💯 This is what excellence looks like! Every visit is a delight. Thank you for creating something so special!",
-      "My heart is full after visiting! ❤️ The warmth, the quality, the genuine care — it's all here. A true treasure!",
-      "🎉 Celebrating this amazing find! It's not often you discover a place this good. Grateful for the experience!",
-      "✨ Pure magic! ✨ From the atmosphere to the service to the little surprises — everything sparkles here!",
-      "🌈 A rainbow of excellence! Every aspect is colorful, thoughtful, and brilliant. My new happy place!",
-      "🔥 On fire! This team is absolutely crushing it. Quality, heart, consistency — they have it all!",
-      "💎 A diamond in the rough! Polished, precious, and perfectly crafted. So glad I found this gem!",
-      "🚀 Next level! This place doesn't just raise the bar — it IS the bar. Incredible work, team!",
-      "🌟 Shining bright! The energy here is contagious in the best way. Left with a huge smile!",
-      "🎯 Bullseye! They hit every mark: quality, service, vibe, value. A perfect 10/10 experience!",
-      "🦄 Unicorn status! Rare, magical, and absolutely real. This place is one of a kind!",
-      "🏆 Championship level! If there were Olympics for this, they'd take gold every time. Legends!",
-      "⭐⭐⭐⭐⭐ Five stars isn't enough! This place deserves a galaxy! ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐",
-      "🌻 Sunshine in business form! Warm, bright, and absolutely delightful. My day is better because of this place!",
-      "🎭 A masterpiece! Every detail composed with care. The team conducts excellence like a symphony!",
-      "🌊 Riding the wave of awesome! This place just flows — quality, service, vibe, all in perfect harmony!",
-      "🦸‍♀️ Superhero status! The team here has superpowers: kindness, excellence, consistency. My heroes!",
-      "🌺 Blooming brilliant! Fresh, vibrant, and beautifully executed. A garden of great experiences!",
-      "⚡ Electric! The energy, the quality, the care — it all charges you up! ⚡",
-      "🎨 Artistry in action! This isn't just service — it's craft. Every touch intentional, every moment curated!",
-      "🏔️ Peak performance! They're operating at the summit of excellence. The view from here is amazing!",
-      "🌟✨⭐ MAGIC! ✨⭐✨ That's the only word. Pure, undeniable, wonderful magic! ✨⭐✨",
-      "💝 From the heart! This place gives so much — quality, care, joy. Thank you for the gift!",
+      "Absolutely incredible! From the moment we walked in, we felt welcomed and valued. The attention to detail is remarkable!",
+      "Wow, just wow! This place exceeded every expectation. The team's passion shines through in everything they do!",
+      "This is what excellence looks like! Every visit is a delight. Thank you for creating something so special!",
+      "My heart is full after visiting! The warmth, the quality, the genuine care — it's all here. A true treasure!",
+      "Celebrating this amazing find! It's not often you discover a place this good. Grateful for the experience!",
+      "Pure magic! From the atmosphere to the service to the little surprises — everything sparkles here!",
+      "A rainbow of excellence! Every aspect is colorful, thoughtful, and brilliant. My new happy place!",
+      "On fire! This team is absolutely crushing it. Quality, heart, consistency — they have it all!",
+      "A diamond in the rough! Polished, precious, and perfectly crafted. So glad I found this gem!",
+      "Next level! This place doesn't just raise the bar — it IS the bar. Incredible work, team!",
+      "Shining bright! The energy here is contagious in the best way. Left with a huge smile!",
+      "Bullseye! They hit every mark: quality, service, vibe, value. A perfect 10/10 experience!",
+      "Unicorn status! Rare, magical, and absolutely real. This place is one of a kind!",
+      "Championship level! If there were Olympics for this, they'd take gold every time. Legends!",
+      "Five stars isn't enough! This place deserves a galaxy!",
+      "Sunshine in business form! Warm, bright, and absolutely delightful. My day is better because of this place!",
+      "A masterpiece! Every detail composed with care. The team conducts excellence like a symphony!",
+      "Riding the wave of awesome! This place just flows — quality, service, vibe, all in perfect harmony!",
+      "Superhero status! The team here has superpowers: kindness, excellence, consistency. My heroes!",
+      "Blooming brilliant! Fresh, vibrant, and beautifully executed. A garden of great experiences!",
+      "Electric! The energy, the quality, the care — it all charges you up!",
+      "Artistry in action! This isn't just service — it's craft. Every touch intentional, every moment curated!",
+      "Peak performance! They're operating at the summit of excellence. The view from here is amazing!",
+      "MAGIC! That's the only word. Pure, undeniable, wonderful magic!",
+      "From the heart! This place gives so much — quality, care, joy. Thank you for the gift!",
     ];
-
-    function getRandomReview() {
-      return REVIEW_TEMPLATES[Math.floor(Math.random() * REVIEW_TEMPLATES.length)];
+    
+    // ===== STATE =====
+    let selectedRating = 5;
+    let outletData = null;
+    let isSubmitting = false;
+    
+    // ===== DOM ELEMENTS =====
+    const outletNameEl = document.getElementById('outletName');
+    const outletNameBtn = document.getElementById('outletNameBtn');
+    const stars = document.querySelectorAll('#stars .star');
+    const starInputs = document.querySelectorAll('#stars .star-input');
+    const reviewTextarea = document.getElementById('reviewText');
+    const charCount = document.getElementById('charCount');
+    const charCountLabel = document.getElementById('charCountLabel');
+    const submitBtn = document.getElementById('submitBtn');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingSubtext = document.getElementById('loadingSubtext');
+    const successState = document.getElementById('successState');
+    const successStars = document.getElementById('successStars');
+    const successReviewText = document.getElementById('successReviewText');
+    const errorState = document.getElementById('errorState');
+    const errorMessage = document.getElementById('errorMessage');
+    const mainCard = document.getElementById('mainCard');
+    
+    // ===== INIT =====
+    function init() {
+      // Get outlet ID from URL
+      const params = new URLSearchParams(window.location.search);
+      const outletId = params.get('outlet') || params.get('id') || params.get('place');
+      
+      if (!outletId) {
+        outletNameEl.textContent = 'Invalid link — missing outlet ID';
+        submitBtn.style.display = 'none';
+        return;
+      }
+      
+      loadOutletConfig(outletId);
+      setupStars();
+      setupReviewTextarea();
+      setupSubmit();
     }
+    
+    async function loadOutletConfig(outletId) {
+      try {
+        const res = await fetch('outlets.json', { cache: 'no-cache' });
+        const config = await res.json();
+        outletData = config.outlets[outletId];
+        
+        if (outletData) {
+          outletNameEl.textContent = outletData.name;
+          outletNameBtn.textContent = outletData.name;
+          document.title = `Review ${outletData.name}`;
+          
+          // Pre-fill review
+          const template = REVIEW_TEMPLATES[Math.floor(Math.random() * REVIEW_TEMPLATES.length)];
+          reviewTextarea.value = template;
+          updateCharCount();
+        } else {
+          outletNameEl.textContent = 'Outlet not found';
+          submitBtn.textContent = 'Configuration Error';
+          submitBtn.disabled = true;
+        }
+      } catch (e) {
+        console.error('Failed to load outlets.json:', e);
+        outletNameEl.textContent = 'Error loading outlet';
+        submitBtn.disabled = true;
+      }
+    }
+    
+    function setupStars() {
+      stars.forEach((star, index) => {
+        star.addEventListener('click', () => selectRating(index + 1));
+        star.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' && index < 4) stars[index + 1].focus();
+          if (e.key === 'ArrowLeft' && index > 0) stars[index - 1].focus();
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRating(index + 1); }
+        });
+      });
+      
+      // Sync radio inputs
+      starInputs.forEach(input => {
+        input.addEventListener('change', () => {
+          if (input.checked) selectRating(parseInt(input.value));
+        });
+      });
+    }
+    
+    function selectRating(rating) {
+      selectedRating = rating;
+      stars.forEach((s, i) => {
+        const filled = i < rating;
+        s.classList.toggle('filled', filled);
+        s.setAttribute('aria-checked', filled);
+        starInputs[i].checked = filled;
+      });
+      validateForm();
+    }
+    
+    function setupReviewTextarea() {
+      reviewTextarea.addEventListener('input', () => {
+        updateCharCount();
+        validateForm();
+      });
+      
+      // Auto-resize
+      reviewTextarea.addEventListener('input', () => {
+        reviewTextarea.style.height = 'auto';
+        reviewTextarea.style.height = Math.min(reviewTextarea.scrollHeight, 200) + 'px';
+      });
+    }
+    
+    function updateCharCount() {
+      const len = reviewTextarea.value.length;
+      charCount.textContent = len;
+      charCount.style.color = len > 1800 ? '#d93025' : '#8e8e93';
+    }
+    
+    function validateForm() {
+      const hasRating = selectedRating > 0;
+      const hasText = reviewTextarea.value.trim().length > 0;
+      submitBtn.disabled = !(hasRating && hasText);
+    }
+    
+    function setupSubmit() {
+      submitBtn.addEventListener('click', submitReview);
+    }
+    
+    // ===== SUBMIT =====
+    async function submitReview() {
+      if (isSubmitting || !outletData) return;
+      
+      const reviewText = reviewTextarea.value.trim();
+      if (!reviewText || selectedRating === 0) return;
+      
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('loading');
+      submitBtn.textContent = 'Posting…';
+      showLoading('Posting your review…', 'Connecting to server');
+      
+      try {
+        // Get cookies
+        const cookies = await getCookies();
+        
+        // Customer ID
+        let customerId = localStorage.getItem('qrify_customer_id');
+        if (!customerId) {
+          customerId = 'cust_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          localStorage.setItem('qrify_customer_id', customerId);
+        }
+        
+        updateLoadingSubtext('Submitting to Google Maps…');
+        
+        const response = await fetch(`${SERVER_URL}/api/submit-review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            outletId: getOutletIdFromUrl(),
+            rating: selectedRating,
+            reviewText: reviewText,
+            customerId,
+            cookies
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('AUTH_REQUIRED: ' + (result.error || 'Please sign in to Google first'));
+          }
+          throw new Error(result.error || 'Server error');
+        }
+        
+        showSuccess(result);
+        
+      } catch (error) {
+        console.error('Submit error:', error);
+        showError(error.message);
+      } finally {
+        isSubmitting = false;
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('loading');
+        submitBtn.textContent = 'Post Review';
+        hideLoading();
+      }
+    }
+    
+    function getOutletIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('outlet') || params.get('id') || params.get('place');
+    }
+    
+    // ===== COOKIES =====
+    async function getCookies() {
+      const cookies = [];
+      
+      // Try Cookie Store API (modern browsers)
+      if ('cookieStore' in window) {
+        try {
+          const all = await cookieStore.getAll({ domain: 'google.com' });
+          cookies.push(...all.map(c => ({
+            name: c.name, value: c.value, domain: c.domain,
+            path: c.path, expires: c.expires, secure: c.secure, sameSite: c.sameSite
+          })));
+        } catch {}
+      }
+      
+      // Fallback to document.cookie
+      document.cookie.split(';').forEach(c => {
+        const [name, value] = c.trim().split('=');
+        if (name && value) cookies.push({ name, value, domain: '.google.com' });
+      });
+      
+      return cookies;
+    }
+    
+    // ===== UI STATES =====
+    function showLoading(text, subtext) {
+      loadingOverlay.classList.add('show');
+      document.querySelector('.loading-text').textContent = text;
+      loadingSubtext.textContent = subtext;
+      mainCard.style.filter = 'blur(4px)';
+      mainCard.style.pointerEvents = 'none';
+    }
+    
+    function updateLoadingSubtext(text) {
+      loadingSubtext.textContent = text;
+    }
+    
+    function hideLoading() {
+      loadingOverlay.classList.remove('show');
+      mainCard.style.filter = 'none';
+      mainCard.style.pointerEvents = 'auto';
+    }
+    
+    function showSuccess(result) {
+      loadingOverlay.classList.remove('show');
+      mainCard.style.display = 'none';
+      successState.classList.add('show');
+      
+      // Stars
+      successStars.innerHTML = '';
+      for (let i = 0; i < result.rating; i++) {
+        const star = document.createElement('span');
+        star.className = 'success-star';
+        star.textContent = '★';
+        successStars.appendChild(star);
+      }
+      
+      successReviewText.textContent = result.reviewText;
+    }
+    
+    function showError(message) {
+      loadingOverlay.classList.remove('show');
+      mainCard.style.display = 'none';
+      errorState.classList.add('show');
+      
+      let displayMessage = message;
+      if (message.includes('AUTH_REQUIRED')) {
+        displayMessage = 'Please sign in to Google in your browser first, then try again.';
+      } else if (message.includes('iframe not found')) {
+        displayMessage = 'Google changed their review page. Please try again later.';
+      }
+      
+      errorMessage.textContent = displayMessage;
+    }
+    
+    function retry() {
+      errorState.classList.remove('show');
+      mainCard.style.display = 'block';
+      validateForm();
+    }
+    
+    // ===== START =====
+    const SERVER_URL = document.querySelector('meta[name="server-url"]')?.content || 'https://qrify-server.onrender.com';
+    init();
   </script>
 </body>
 </html>
